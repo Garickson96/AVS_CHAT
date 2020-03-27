@@ -15,36 +15,72 @@
 #define PORT 6000
 #define IP_ADDRESS "127.0.0.1"
 
-int main(int argc, char **argv) {
+/**
+ * Pri true - kriticka chyba, uzatvor program
+ */
+void osetri_chybu(char *popis_chyby, int hodnota_porovnaj, int chybova_hodnota, bool zavri_spojenie, int socket_descr) {
+	if (hodnota_porovnaj == chybova_hodnota) {
+		perror(popis_chyby);
+		if (zavri_spojenie) {
+			close(socket_descr);
+		}
 
-	// ideme na L4!
-	int socket_descr = socket(AF_INET, SOCK_DGRAM, 0);
-	if (socket_descr == -1) {
-		perror("chyba socket");
-		return EXIT_FAILURE;
+		exit(EXIT_FAILURE);
 	}
+}
 
+/**
+ *
+ */
+int nastav_socket(void) {
+	int socket_descr = socket(AF_INET, SOCK_STREAM, 0);
+	osetri_chybu("Nepodarilo sa vytvorit socket.", socket_descr, -1, false, 0);
+
+	return socket_descr;
+}
+
+/**
+ * mozno osetrit nespravne hodnoty?
+ */
+void nastav_bind(int socket_id, int port) {
 	// nezabudat na prehadzovanie
 	struct sockaddr_in addr;
 	memset(&addr, 0, sizeof(struct sockaddr_in));
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(PORT);
-	// alebo by sa tu dalo INADDR_ANY
-	int status_aton = inet_aton(IP_ADDRESS, &(addr.sin_addr));
 
-	if (status_aton == 0) {
-		perror("chyba inet_aton");
-		close(socket_descr);
-		return EXIT_FAILURE;
-	}
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(port);
+	addr.sin_addr.s_addr = INADDR_ANY;
 
 	// operacia bind
-	int bind_status = bind(socket_descr, (struct sockaddr *)&addr, sizeof(addr));
-	if (bind_status == -1) {
-		perror("chyba bind");
-		close(socket_descr);
-		return EXIT_FAILURE;
-	}
+	int bind_status = bind(socket_id, (struct sockaddr *)&addr, sizeof(addr));
+	osetri_chybu("Nepodarilo sa nastavit bind.", bind_status, -1, true, socket_id);
+}
+
+/**
+ *
+ */
+void nastav_accept() {}
+
+/**
+ *
+ */
+void zapis() {}
+
+/**
+ *
+ */
+void citaj() {}
+
+/**
+ *
+ */
+void uzatvor_socket() {}
+
+
+int main(int argc, char **argv) {
+
+	int socket_descr = nastav_socket();
+	nastav_bind(socket_descr, PORT);
 
 	printf("SERVER UDP PO BIND\n");
 	// echo server
