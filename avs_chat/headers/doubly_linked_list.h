@@ -1,8 +1,16 @@
 #ifndef LINKEDLIST_H
 #define LINKEDLIST_H
 
+#include <sys/socket.h>
+
+typedef struct accept_info {
+	char meno[50];
+	struct sockaddr ip_adresa;
+	int socket_id;
+} ACCEPT_INFO;
+
 typedef struct doublylinkedlist_item {
-    double data;
+    ACCEPT_INFO data;
     struct doublylinkedlist_item *next;
     struct doublylinkedlist_item *previous;
 } DOUBLYLINKEDLIST_ITEM;
@@ -14,22 +22,17 @@ typedef struct doublylinkedlist {
 } DOUBLYLINKEDLIST;
 
 void initDLL(DOUBLYLINKEDLIST *list);
-void initDLLItem(DOUBLYLINKEDLIST_ITEM *item, double data);
+void initDLLItem(DOUBLYLINKEDLIST_ITEM *item, ACCEPT_INFO data);
 
 void disposeDLL(DOUBLYLINKEDLIST *list); 
 void printDLL(const DOUBLYLINKEDLIST *list); 
-void printDLLReverse(const DOUBLYLINKEDLIST *list);
 
-void addDLL(DOUBLYLINKEDLIST *list, double data); 
+void addDLL(DOUBLYLINKEDLIST *list, ACCEPT_INFO data);
 
-bool tryInsertDLL(DOUBLYLINKEDLIST *list, double data, int pos);
-bool trySetDLL(DOUBLYLINKEDLIST *list, int pos, double data); 
-bool tryGetDLL(DOUBLYLINKEDLIST *list, int pos, double *data); 
+bool tryInsertDLL(DOUBLYLINKEDLIST *list, ACCEPT_INFO data, int pos);
+bool trySetDLL(DOUBLYLINKEDLIST *list, int pos, ACCEPT_INFO data);
+bool tryGetDLL(DOUBLYLINKEDLIST *list, int pos, ACCEPT_INFO *data);
 
-bool tryRemoveDLL(DOUBLYLINKEDLIST *list, int pos, double *data);
-bool tryCopyDLL(const DOUBLYLINKEDLIST *src, DOUBLYLINKEDLIST *dest); 
-
-void readFromTxtDLL(DOUBLYLINKEDLIST *list, FILE *txtFile); 
-void writeToTxtDLL(const DOUBLYLINKEDLIST *list, FILE *txtFile);
+bool tryRemoveDLL(DOUBLYLINKEDLIST *list, int pos, ACCEPT_INFO *data);
 
 #endif /* LINKEDLIST_H */

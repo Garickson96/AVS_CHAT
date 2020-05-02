@@ -63,6 +63,8 @@
                             							
                             <tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.1838343210" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug">
                                 								
+                                <option id="gnu.c.link.option.pthread.2079333403" superClass="gnu.c.link.option.pthread" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                								
                                 <inputType id="cdt.managedbuild.tool.gnu.c.linker.input.1433725917" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
                                     									
                                     <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>

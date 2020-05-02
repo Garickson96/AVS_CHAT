@@ -11,7 +11,7 @@ void initDLL(DOUBLYLINKEDLIST *list) {
     list->size = 0;
 }
 
-void initDLLItem(DOUBLYLINKEDLIST_ITEM *item, double data) {
+void initDLLItem(DOUBLYLINKEDLIST_ITEM *item, ACCEPT_INFO data) {
     item->data = data;
     item->next = NULL;
     item->previous = NULL;
@@ -36,18 +36,8 @@ void printDLL(const DOUBLYLINKEDLIST *list) {
     DOUBLYLINKEDLIST_ITEM *item = list->first;
     
     while (item != NULL) {
-        printf("%.4lf ", item->data);
+        //printf("%.4lf ", item->data);
         item = item->next;
-    }
-    printf("\n");
-} 
-
-void printDLLReverse(const DOUBLYLINKEDLIST *list) {
-    DOUBLYLINKEDLIST_ITEM *item = list->last;
-    
-    while (item != NULL) {
-        printf("%.4lf ", item->data);
-        item = item->previous;
     }
     printf("\n");
 } 
@@ -76,7 +66,7 @@ static DOUBLYLINKEDLIST_ITEM *get_item_reverse(DOUBLYLINKEDLIST *list, int pos) 
     return aktualna_polozka;
 }
 
-void addDLL(DOUBLYLINKEDLIST *list, double data) {
+void addDLL(DOUBLYLINKEDLIST *list, ACCEPT_INFO data) {
     // musí to byť na halde
     DOUBLYLINKEDLIST_ITEM *new_item = (DOUBLYLINKEDLIST_ITEM *)malloc(sizeof(DOUBLYLINKEDLIST_ITEM));
     // zišla by sa tu kontrola či to existuje
@@ -95,7 +85,7 @@ void addDLL(DOUBLYLINKEDLIST *list, double data) {
     list->size++;
 } 
 
-bool tryInsertDLL(DOUBLYLINKEDLIST *list, double data, int pos) {
+bool tryInsertDLL(DOUBLYLINKEDLIST *list, ACCEPT_INFO data, int pos) {
     if (pos >= 0 && pos <= list->size) {
         DOUBLYLINKEDLIST_ITEM *new_item = (DOUBLYLINKEDLIST_ITEM *)malloc(sizeof(DOUBLYLINKEDLIST_ITEM));
         if (new_item == NULL) {
@@ -136,7 +126,7 @@ bool tryInsertDLL(DOUBLYLINKEDLIST *list, double data, int pos) {
     }
 }
 
-bool trySetDLL(DOUBLYLINKEDLIST *list, int pos, double data) {
+bool trySetDLL(DOUBLYLINKEDLIST *list, int pos, ACCEPT_INFO data) {
     if (pos >= 0 && pos < list->size) {
         DOUBLYLINKEDLIST_ITEM *aktualna_polozka;
         if (pos < list->size / 2) {
@@ -152,7 +142,7 @@ bool trySetDLL(DOUBLYLINKEDLIST *list, int pos, double data) {
     }
 }
 
-bool tryGetDLL(DOUBLYLINKEDLIST *list, int pos, double *data) {
+bool tryGetDLL(DOUBLYLINKEDLIST *list, int pos, ACCEPT_INFO *data) {
     if (pos >= 0 && pos < list->size) {
         DOUBLYLINKEDLIST_ITEM *aktualna_polozka;
         if (pos < list->size / 2) {
@@ -168,7 +158,7 @@ bool tryGetDLL(DOUBLYLINKEDLIST *list, int pos, double *data) {
     }
 } 
 
-bool tryRemoveDLL(DOUBLYLINKEDLIST *list, int pos, double *data) {
+bool tryRemoveDLL(DOUBLYLINKEDLIST *list, int pos, ACCEPT_INFO *data) {
     if (pos >= 0 && pos < list->size) {   
         // veľmi špecifický prípad
         if (list->size == 1) {
@@ -229,36 +219,5 @@ bool tryRemoveDLL(DOUBLYLINKEDLIST *list, int pos, double *data) {
         return true;
     } else {
         return false;
-    }
-}
-
-bool tryCopyDLL(const DOUBLYLINKEDLIST *src, DOUBLYLINKEDLIST *dest) {
-    DOUBLYLINKEDLIST_ITEM *aktualna_polozka = src->first;
-    while (aktualna_polozka != NULL) {
-        addDLL(dest, aktualna_polozka->data);
-        aktualna_polozka = aktualna_polozka->next;
-    }
-    
-    // keďže nevykonávam kontroly v addLL - tak sa nedá tu vykonať nejaký typ kontroly
-    return true;
-}
-
-void readFromTxtDLL(DOUBLYLINKEDLIST *list, FILE *txtFile) {
-    double aktualne_cislo;
-    // nezabúdaj na to, ako sa píše fscanf
-    int status = fscanf(txtFile, "%lf ", &aktualne_cislo);
-    
-    while (status != -1) {
-        addDLL(list, aktualne_cislo);
-        status = fscanf(txtFile, "%lf ", &aktualne_cislo);
-    }
-}
-
-void writeToTxtDLL(const DOUBLYLINKEDLIST *list, FILE *txtFile) {
-    DOUBLYLINKEDLIST_ITEM *aktualna_polozka = list->first;
-    
-    while (aktualna_polozka != NULL) {
-        fprintf(txtFile, "%lf ", aktualna_polozka->data);
-        aktualna_polozka = aktualna_polozka->next;
     }
 }

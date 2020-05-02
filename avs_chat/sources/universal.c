@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -21,6 +22,46 @@ void osetri_chybu(char *popis_chyby, int hodnota_porovnaj, int chybova_hodnota, 
 		}
 
 		exit(EXIT_FAILURE);
+	}
+}
+
+/**
+ *
+ */
+void osetri_chybu_malloc(char *popis_chyby, void *smernik_malloc) {
+	if (smernik_malloc == NULL) {
+		perror(popis_chyby);
+		exit(EXIT_FAILURE);
+	}
+}
+
+/**
+ *
+ */
+void osetri_chybu_nekriticka(char *popis_chyby, int hodnota_porovnaj, int chybova_hodnota) {
+	if (hodnota_porovnaj == chybova_hodnota) {
+		perror(popis_chyby);
+	}
+}
+
+/**
+ *
+ */
+void *vytvor_nastav_malloc(int velkost, char *sprava) {
+	void *vytvorene_data = malloc(velkost);
+	osetri_chybu_malloc(sprava, vytvorene_data);
+	memset(vytvorene_data, 0, velkost);
+
+	return vytvorene_data;
+}
+
+/**
+ *
+ */
+void dealokuj_malloc(void **malloc_priestor) {
+	if (*malloc_priestor != NULL) {
+		free(*malloc_priestor);
+		*malloc_priestor = NULL;
 	}
 }
 
