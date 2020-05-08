@@ -12,7 +12,7 @@ void initDLL(DOUBLYLINKEDLIST *list) {
 }
 
 void initDLLItem(DOUBLYLINKEDLIST_ITEM *item, ACCEPT_INFO data) {
-    item->data = data;
+    memcpy(&(item->data), &data, sizeof(data));
     item->next = NULL;
     item->previous = NULL;
 }
@@ -30,16 +30,6 @@ void disposeDLL(DOUBLYLINKEDLIST *list) {
     
     list->last = NULL;
     list->size = 0;
-} 
-
-void printDLL(const DOUBLYLINKEDLIST *list) {
-    DOUBLYLINKEDLIST_ITEM *item = list->first;
-    
-    while (item != NULL) {
-        //printf("%.4lf ", item->data);
-        item = item->next;
-    }
-    printf("\n");
 } 
 
 static DOUBLYLINKEDLIST_ITEM *get_item(DOUBLYLINKEDLIST *list, int pos) {

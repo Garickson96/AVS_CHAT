@@ -83,8 +83,8 @@ void *posli_info_existujem(void *data) {
 	bool *indikator_pokracuj = data_zis->indikator_pokracuj;
 	char *meno = data_zis->meno;
 	int socket_id = data_zis->discovery_socket;
+	int port_discovery = data_zis->port_discovery;
 	int port_tcp_server = data_zis->port_tcp_server;
-	int port_discovery_receive = data_zis->port_discovery_receive;
 
 	// http://man7.org/linux/man-pages/man3/getifaddrs.3.html
 	struct ifaddrs *prva_polozka_zoznamu;
@@ -96,7 +96,7 @@ void *posli_info_existujem(void *data) {
 	memset(&ciel_spravy, 0, sizeof(ciel_spravy));
 
 	ciel_spravy.sin_family = AF_INET;
-	ciel_spravy.sin_port = htons(port_discovery_receive);
+	ciel_spravy.sin_port = htons(port_discovery);
 
 	char buffer[BUFFER_UDP_MINI_SIZE];
 	memset(buffer, 0, sizeof(buffer));
@@ -105,11 +105,13 @@ void *posli_info_existujem(void *data) {
 	while (*indikator_pokracuj) {
 		while (aktualna_polozka != NULL) {
 			if (aktualna_polozka->ifa_broadaddr != NULL && aktualna_polozka->ifa_broadaddr->sa_family == AF_INET) {
+
+				///for
 				debug_sprava("Posielam spravu, ze existujem.");
 				memcpy(&ciel_spravy.sin_addr, &(((struct sockaddr_in *)(aktualna_polozka->ifa_broadaddr))->sin_addr), sizeof(struct in_addr));
 
 				int pocet_odoslanych = sendto(socket_id, buffer, strlen(buffer), 0, (struct sockaddr *)&ciel_spravy, sizeof(ciel_spravy));
-				osetri_chybu("Nepodarilo sa odoslat spravu, ze existujem - UDP DISCOVERY.", pocet_odoslanych, -1, true, socket_id);
+				osetri_chybu("Nepodarilo sa odohtons(&ciel_spravy.sin_port)slat spravu, ze existujem - UDP DISCOVERY.", pocet_odoslanych, -1, true, socket_id);
 			}
 
 			aktualna_polozka = aktualna_polozka->ifa_next;
@@ -160,6 +162,7 @@ void *prijmi_info_existujem(void *data) {
 
 		int pocet_prijatych = recvfrom(socket_id, buffer, sizeof(buffer), 0, &od_koho_informacie, &size_od_koho_informacie);
 		osetri_chybu("Nepodarilo sa prijat spravu o inom, ze existuje - UDP DISCOVERY.", pocet_prijatych, -1, true, socket_id);
+		short cislo_portu_zaloha = ((struct sockaddr_in *)&od_koho_informacie)->sin_port;
 
 		if (strstr(buffer, FORMAT_SPRAVY) != NULL) {
 			struct sockaddr_in *od_koho = (struct sockaddr_in *)&od_koho_informacie;
@@ -170,12 +173,13 @@ void *prijmi_info_existujem(void *data) {
 
 			if (!existuje_pouzivatel(list_connect, buffer_meno)) {
 				debug_sprava("Pripajam noveho pouzivatela...");
-				pripoj_sa(&od_koho_informacie, size_od_koho_informacie, list_connect, buffer_meno);
+				pripoj_sa(&od_koho_informacie, sizeof(od_koho_informacie), list_connect, buffer_meno);
 			} else {
 				// debug_sprava("Pouzivatel so zadanym menom je uz pripojeny.");
 			}
 		}
 
+		((struct sockaddr_in *)&od_koho_informacie)->sin_port = cislo_portu_zaloha;
 		debug_ip_sprava((struct sockaddr_in *)&od_koho_informacie, buffer);
 		memset(buffer, 0, sizeof(buffer));
 	}
@@ -202,7 +206,7 @@ bool existuje_pouzivatel(DOUBLYLINKEDLIST *list_connect, char *meno) {
 /**
  *
  */
-int spracuj_discovery(bool *indikator_pokracuj, int port_tcp_server, int port_discovery_send, int port_discovery_receive,
+int spracuj_discovery(bool *indikator_pokracuj, int port_tcp_server, int port_discovery,
 		pthread_t *thread_discovery, pthread_t *thread_discovery_posli,
 		struct data_discovery *data_pre_spracovanie, struct data_discovery_zistovanie *data_discovery_posli,
 		int socket_id_tcp, char *meno, DOUBLYLINKEDLIST *list_connect) {
@@ -211,7 +215,7 @@ int spracuj_discovery(bool *indikator_pokracuj, int port_tcp_server, int port_di
 
 	int discovery_socket = vytvor_socket_discovery();
 	nastav_broadcast_discovery(discovery_socket);
-	nastav_discovery_bind(discovery_socket, port_discovery_send);
+	nastav_discovery_bind(discovery_socket, port_discovery);
 
 	data_pre_spracovanie->indikator_pokracuj = indikator_pokracuj;
 	data_pre_spracovanie->socket_id = discovery_socket;
@@ -221,7 +225,7 @@ int spracuj_discovery(bool *indikator_pokracuj, int port_tcp_server, int port_di
 	data_discovery_posli->indikator_pokracuj = indikator_pokracuj;
 	data_discovery_posli->discovery_socket = discovery_socket;
 	data_discovery_posli->port_tcp_server = port_tcp_server;
-	data_discovery_posli->port_discovery_receive = port_discovery_receive;
+	data_discovery_posli->port_discovery = port_discovery;
 	// netreba deep copy
 	data_discovery_posli->meno = meno;
 

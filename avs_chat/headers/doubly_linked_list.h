@@ -2,11 +2,15 @@
 #define LINKEDLIST_H
 
 #include <sys/socket.h>
+#include <time.h>
 
 typedef struct accept_info {
 	char meno[50];
 	struct sockaddr ip_adresa;
 	int socket_id;
+
+	int posledny_stav;
+	time_t cas_nastavenia;
 } ACCEPT_INFO;
 
 typedef struct doublylinkedlist_item {
@@ -25,7 +29,6 @@ void initDLL(DOUBLYLINKEDLIST *list);
 void initDLLItem(DOUBLYLINKEDLIST_ITEM *item, ACCEPT_INFO data);
 
 void disposeDLL(DOUBLYLINKEDLIST *list); 
-void printDLL(const DOUBLYLINKEDLIST *list); 
 
 void addDLL(DOUBLYLINKEDLIST *list, ACCEPT_INFO data);
 

@@ -13,7 +13,7 @@ void *prijmi_info_existujem(void *data);
 bool existuje_pouzivatel(DOUBLYLINKEDLIST *list_connect, char *meno);
 void uzatvor_socket_discovery(int socket_id);
 
-int spracuj_discovery(bool *indikator_pokracuj, int port_tcp_server, int port_discovery_send, int port_discovery_receive,
+int spracuj_discovery(bool *indikator_pokracuj, int port_tcp_server, int port_discovery,
 		pthread_t *thread_discovery, pthread_t *thread_discovery_posli,
 		struct data_discovery *data_pre_spracovanie, struct data_discovery_zistovanie *data_discovery_posli,
 		int socket_id_tcp, char *meno, DOUBLYLINKEDLIST *list_connect);

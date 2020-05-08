@@ -3,6 +3,10 @@
 
 #include <stdbool.h>
 
+#define ODDELOVAC '>'
+#define ODDELOVAC_AKCIA '~'
+#define ODDELOVAC_PARAMETER '#'
+
 void osetri_chybu(char *popis_chyby, int hodnota_porovnaj, int chybova_hodnota, bool zavri_spojenie, int socket_descr);
 void osetri_chybu_nekriticka(char *popis_chyby, int hodnota_porovnaj, int chybova_hodnota);
 void osetri_chybu_malloc(char *popis_chyby, void *smernik_malloc);
