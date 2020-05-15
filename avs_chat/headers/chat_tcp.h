@@ -14,7 +14,7 @@ void nastav_chat_bind(int socket_id, int port);
 void nastav_chat_listen(int socket_id, int pocet_listen);
 
 void chat_jeden_zapis(int socket_kam, char *sprava, char *meno);
-void chat_jeden_citaj(int socket_odkoho, char *buffer, int velkost_buffra);
+int chat_jeden_citaj(int socket_odkoho, char *buffer, int velkost_buffra);
 
 void chat_akcia_zapis(int socket_kam, char *typ_akcie, char *parametre);
 

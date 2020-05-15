@@ -43,4 +43,12 @@ struct data_read_write {
 	int *moj_stav;
 };
 
+struct data_odoslanie_suboru {
+	int cislo_portu_odosielanie;
+	int socket_id;
+
+	char *moje_meno;
+	char nazov_suboru[100];
+};
+
 #endif /* STRUCTS_THREADS_H_ */

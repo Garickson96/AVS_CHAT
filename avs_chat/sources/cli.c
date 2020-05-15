@@ -13,12 +13,16 @@
 #include "../headers/discovery_udp.h"
 #include "../headers/chat_tcp.h"
 #include "../headers/universal.h"
+#include "../headers/files_processor.h"
 
 #define BUFFER_VELKOST 50
 #define TEXT_VELKOST 160
 #define BUFFER_DATUM 30
 #define KONCOVA_SPRAVA ":KONIEC"
 
+/**
+ *
+ */
 char vyber_volby(void) {
 	char volba;
 	printf("Zadajte vasu volbu: ");
@@ -27,15 +31,24 @@ char vyber_volby(void) {
 	return volba;
 }
 
+/**
+ *
+ */
 void zoznam_menu(void) {
 
 }
 
+/**
+ *
+ */
 char *daj_ip_string(const struct sockaddr *adresa, char *buffer) {
 	sprintf(buffer, "%s:%d", inet_ntoa(((struct sockaddr_in *)adresa)->sin_addr), ntohs(((struct sockaddr_in *)adresa)->sin_port));
 	return buffer;
 }
 
+/**
+ *
+ */
 void zobraz_list_connect(DOUBLYLINKEDLIST *list, char *moje_meno, char **pomenovania_statusov, int n) {
 	DOUBLYLINKEDLIST_ITEM *aktualny = list->first;
 	printf("CISLO\tMENO\tSOCKET ID\tIP ADRESA\nSTATUS\nCAS AKTUALIZACIE");
@@ -58,6 +71,9 @@ void zobraz_list_connect(DOUBLYLINKEDLIST *list, char *moje_meno, char **pomenov
 	}
 }
 
+/**
+ *
+ */
 void zobraz_list_accept(DOUBLYLINKEDLIST *list) {
 	DOUBLYLINKEDLIST_ITEM *aktualny = list->first;
 	printf("CISLO\tMENO\tSOCKET ID\tIP ADRESA\nSTATUS\nCAS AKTUALIZACIE");
@@ -71,6 +87,9 @@ void zobraz_list_accept(DOUBLYLINKEDLIST *list) {
 	}
 }
 
+/**
+ *
+ */
 void posli_spravu(DOUBLYLINKEDLIST *list, char *moje_meno, char **pomenovania_statusov, int n) {
 	int cislo_adresata = -1;
 	char buffer[TEXT_VELKOST];
@@ -117,6 +136,9 @@ void posli_spravu(DOUBLYLINKEDLIST *list, char *moje_meno, char **pomenovania_st
 	} while (strcmp(buffer, ":KONIEC") != 0);
 }
 
+/**
+ *
+ */
 void vypis_dostupne_statusy(char **pomenovania_statusov, int n) {
 	printf("Vypis moznych statusov: \n");
 	for (int i = 0; i < n; i++) {
@@ -124,6 +146,9 @@ void vypis_dostupne_statusy(char **pomenovania_statusov, int n) {
 	}
 }
 
+/**
+ *
+ */
 void zobraz_moj_status(char **pomenovania_statusov, int n, int *aktualny_stav) {
 	if (*aktualny_stav >= 0 && *aktualny_stav < n) {
 		printf("Vas aktualny stav je: %s.\n", pomenovania_statusov[*aktualny_stav]);
@@ -132,6 +157,9 @@ void zobraz_moj_status(char **pomenovania_statusov, int n, int *aktualny_stav) {
 	}
 }
 
+/**
+ *
+ */
 void zmen_moj_status(char **pomenovania_statusov, int n, int *aktualny_stav, DOUBLYLINKEDLIST *list, char *moje_meno) {
 	vypis_dostupne_statusy(pomenovania_statusov, n);
 
@@ -161,12 +189,15 @@ void zmen_moj_status(char **pomenovania_statusov, int n, int *aktualny_stav, DOU
 	zobraz_moj_status(pomenovania_statusov, n, aktualny_stav);
 }
 
+/**
+ *
+ */
 void aktualizuj_statusy(DOUBLYLINKEDLIST *list, char *moje_meno) {
 	DOUBLYLINKEDLIST_ITEM *aktualny = list->first;
 	while (aktualny != NULL) {
 		if (strcmp(moje_meno, aktualny->data.meno) != 0) {
 			debug_sprava("Posielam ziadost o aktualny stav.");
-			chat_akcia_zapis(aktualny->data.socket_id, "ZISKAJ_STAV", "");
+			chat_akcia_zapis(aktualny->data.socket_id, "ZISKAJ_STAV", moje_meno);
 		}
 
 		aktualny = aktualny->next;
@@ -175,10 +206,66 @@ void aktualizuj_statusy(DOUBLYLINKEDLIST *list, char *moje_meno) {
 	printf("Ziadosti boli rozposlane, dajte si zobrazit zoznam pouzivatelov.\n");
 }
 
+/**
+ *
+ */
+void odoslat_subor_cli(DOUBLYLINKEDLIST *list, char *moje_meno, char **pomenovania_statusov, int n, struct data_odoslanie_suboru *data) {
+	printf("Vyberte si adresata spravy: \n");
+
+	zobraz_list_connect(list, moje_meno, pomenovania_statusov, n);
+
+	int cislo_adresata = -1;
+	printf("\nVyberte cislo adresata: \n");
+	scanf("%d", &cislo_adresata);
+
+	char nazov_suboru[BUFFER_VELKOST];
+	printf("Zadajte nazov suboru: \n");
+	scanf("%s", nazov_suboru);
+
+	// kontrola cisla adresata
+	DOUBLYLINKEDLIST_ITEM *aktualny = list->first;
+	int i = 0;
+	while (aktualny != NULL) {
+		if (i == cislo_adresata) {
+			break;
+		}
+
+		aktualny = aktualny->next;
+		i++;
+	}
+
+	if (aktualny == NULL) {
+		printf("Pozadovany adresat neexistuje!\n");
+		return;
+	}
+
+	// zistenie velkosti - zatial neimplementovane
+
+	// pripravim svoju stranu
+	data->cislo_portu_odosielanie = 9001;
+	data->socket_id = aktualny->data.socket_id;
+	data->moje_meno = moje_meno;
+	memcpy(data->nazov_suboru, nazov_suboru, sizeof(data->nazov_suboru));
+
+	pthread_t thread_subor;
+	pthread_create(&thread_subor, NULL, &priprav_socket_odosielanie_subor, data);
+
+	// notifikujem druhu stranu o tom, ze idem posielat
+	debug_sprava("Posielam informaciu o tom, ze idem posielat subor.");
+
+	// pthread_join(&thread_subor, NULL);
+}
+
+/**
+ *
+ */
 void nespravna_hodnota(void) {
 	printf("Zadali ste nespravnu hodnotu v menu.\n");
 }
 
+/**
+ *
+ */
 void ukoncenie_programu(bool *indikator_pokracuj, int chat_socket, int discovery_socket, pthread_t **pole_threadov, int pocet) {
 	*indikator_pokracuj = false;
 	uzatvor_socket_chat(chat_socket);

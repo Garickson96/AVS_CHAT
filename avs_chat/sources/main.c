@@ -9,6 +9,7 @@
 #include "../headers/discovery_udp.h"
 #include "../headers/structs_threads.h"
 #include "../headers/universal.h"
+#include "../headers/files_processor.h"
 #include "../headers/cli.h"
 
 #define MENO_BUFFER 30
@@ -23,6 +24,7 @@
 // predvolene 10100 10001
 int main(int argc, char **argv) {
 	bool indikator_pokracuj = true;
+
 	pthread_t thread_accept, thread_spracovanie, thread_discovery, thread_discovery_posli;
 	pthread_t *pole_thread[POLOZKY_THREAD] = { &thread_accept, &thread_spracovanie, &thread_discovery, &thread_discovery_posli };
 
@@ -70,6 +72,8 @@ int main(int argc, char **argv) {
 
 	data_accept->list_accept = &list_accept;
 
+	struct data_odoslanie_suboru *data_odoslanie_suboru = (struct data_odoslanie_suboru *)vytvor_nastav_malloc(sizeof(struct data_odoslanie_suboru), "Nepodarilo sa alokovat priestor pre data_odoslanie_suboru.");
+
 	// pridanie sameho seba
 	struct accept_info info_ja;
 	memset(&info_ja, 0, sizeof(info_ja));
@@ -114,6 +118,12 @@ int main(int argc, char **argv) {
 			case 'g':
 				aktualizuj_statusy(&list_connect, meno);
 				break;
+			case 'h':
+				zobraz_subory_adresar("/root");
+				break;
+			case 'i':
+				odoslat_subor_cli(&list_connect, meno, pomenovania_statusov, POCET_STATUSOV, data_odoslanie_suboru);
+				break;
 			default:
 				nespravna_hodnota();
 				break;
@@ -130,6 +140,7 @@ int main(int argc, char **argv) {
 	disposeDLL(&list_connect);
 	disposeDLL(data_accept->list_accept);
 
+	dealokuj_malloc((void **)&data_odoslanie_suboru);
 	dealokuj_malloc((void **)&data_read_write);
 	dealokuj_malloc((void **)&data_accept);
 	dealokuj_malloc((void **)&data_discovery_zistovanie);

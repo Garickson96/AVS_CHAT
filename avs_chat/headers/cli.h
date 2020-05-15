@@ -2,6 +2,7 @@
 #define HEADERS_CLI_H_
 
 #include "../headers/doubly_linked_list.h"
+#include "../headers/structs_threads.h"
 
 char vyber_volby(void);
 
@@ -14,6 +15,7 @@ void vypis_dostupne_statusy(char **pomenovania_statusov, int n);
 void zobraz_moj_status(char **pomenovania_statusov, int n, int *aktualny_stav);
 void zmen_moj_status(char **pomenovania_statusov, int n, int *aktualny_stav, DOUBLYLINKEDLIST *list, char *moje_meno);
 void aktualizuj_statusy(DOUBLYLINKEDLIST *list, char *moje_meno);
+void odoslat_subor_cli(DOUBLYLINKEDLIST *list, char *moje_meno, char **pomenovania_statusov, int n, struct data_odoslanie_suboru *data);
 
 void zoznam_menu(void);
 void nespravna_hodnota(void);

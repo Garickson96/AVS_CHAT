@@ -1,11 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <string.h>
-
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include "../headers/universal.h"
 
@@ -42,6 +39,18 @@ void osetri_chybu_nekriticka(char *popis_chyby, int hodnota_porovnaj, int chybov
 	if (hodnota_porovnaj == chybova_hodnota) {
 		perror(popis_chyby);
 	}
+}
+
+/**
+ *
+ */
+bool osetri_chybu_suboru(char *popis_chyby, FILE *smernik_subor) {
+	if (smernik_subor == NULL) {
+		perror(popis_chyby);
+		return true;
+	}
+
+	return false;
 }
 
 /**

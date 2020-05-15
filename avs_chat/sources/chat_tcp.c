@@ -18,11 +18,12 @@
 
 #include "../headers/universal.h"
 #include "../headers/chat_tcp.h"
+#include "../headers/files_processor.h"
 
 #define IP_ADDRESS "127.0.0.1"
 
 #define MAXIMUM_LISTEN 50
-#define MAX_UDALOSTI 10
+#define MAX_UDALOSTI 20
 #define VELKOST_BUFFRA 100
 #define SPRAVA_S_MENOM 200
 
@@ -157,15 +158,18 @@ void chat_akcia_zapis(int socket_kam, char *typ_akcie, char *parametre) {
 	sprintf(buffer, "%s%c%s", typ_akcie, ODDELOVAC_AKCIA, parametre);
 
 	int pocet_znakov_zapis = send(socket_kam, buffer, strlen(buffer), 0);
+	printf("%s\n", buffer);
 	osetri_chybu_nekriticka("Nepodaril sa zapis akcie - nekriticka chyba.", pocet_znakov_zapis, -1);
 }
 
 /**
  *
  */
-void chat_jeden_citaj(int socket_odkoho, char *buffer, int velkost_buffra) {
+int chat_jeden_citaj(int socket_odkoho, char *buffer, int velkost_buffra) {
 	int pocet_znakov_citaj = recv(socket_odkoho, buffer, velkost_buffra, 0);
 	osetri_chybu_nekriticka("Nepodaril sa citanie - nekriticka chyba.", pocet_znakov_citaj, -1);
+
+	return pocet_znakov_citaj;
 }
 
 /**
@@ -186,7 +190,7 @@ int vytvor_epoll(int socket_id) {
 void *chat_spracovanie_sprav(void *data_spracovanie) {
 	struct data_read_write *data = (struct data_read_write *)data_spracovanie;
 	int epoll_descriptor = data->epoll_descriptor;
-	int socket_id = data->socket_id;
+	// int socket_id = data->socket_id;
 	int maximum_stavov = data->maximum_stavov;
 	DOUBLYLINKEDLIST *list_connect = data->list_connect;
 	bool *indikator_pokracuj = data->indikator_pokracuj;
@@ -194,11 +198,13 @@ void *chat_spracovanie_sprav(void *data_spracovanie) {
 	int *moj_stav = data->moj_stav;
 
 	// epoll event pre socket_id
+	/*
 	struct epoll_event udalosti;
 	udalosti.events = EPOLLOUT | EPOLLET;
 	udalosti.data.fd = socket_id;
 	int epoll_status = epoll_ctl(epoll_descriptor, EPOLL_CTL_ADD, socket_id, &udalosti);
 	osetri_chybu("Nepodarilo sa priradit socket do epoll.", epoll_status, -1, true, socket_id);
+	*/
 
 	// vykonavanie udalosti, ktore boli zistene cez epoll
 	struct epoll_event zoznam_udalosti[MAX_UDALOSTI];
@@ -215,9 +221,9 @@ void *chat_spracovanie_sprav(void *data_spracovanie) {
 				memset(buffer, 0, sizeof(buffer));
 
 				chat_jeden_citaj(zoznam_udalosti[i].data.fd, buffer, VELKOST_BUFFRA);
+				printf("%s\n", buffer);
 
 				if (strchr(buffer, ODDELOVAC) == NULL) {
-					// todo: prerobit vyraz v sscanf
 					char prikaz[MINI_BUFFER];
 					char parametre[MINI_BUFFER];
 					sscanf(buffer, "%[^'~']~%s", prikaz, parametre);
@@ -228,12 +234,22 @@ void *chat_spracovanie_sprav(void *data_spracovanie) {
 						debug_sprava("Informujem o svojom stave ineho pouzivatela...");
 						char buffer_odoslat[VELKOST_BUFFRA];
 						sprintf(buffer_odoslat, "%s#%d", moje_meno, *moj_stav);
-						chat_akcia_zapis(zoznam_udalosti[i].data.fd, "ZMEN_STAV", buffer_odoslat);
+
+						DOUBLYLINKEDLIST_ITEM *aktualny = list_connect->first;
+						while (aktualny != NULL) {
+							if (strcmp(parametre, aktualny->data.meno) == 0) {
+								break;
+							}
+
+							aktualny = aktualny->next;
+						}
+
+						chat_akcia_zapis(aktualny->data.socket_id, "ZMEN_STAV", buffer_odoslat);
 
 					} else if (strcmp(prikaz, "ZMEN_STAV") == 0) {
 						// dodat tu - zmen_stav
 						// nereagujem na to spravou
-
+						printf("%s\n", buffer);
 						debug_sprava("Zapisujem informaciu o zmene stavu ineho pouzivatela...");
 						char meno[MINI_BUFFER];
 						int stav_skonvertovany = -1;
@@ -263,8 +279,44 @@ void *chat_spracovanie_sprav(void *data_spracovanie) {
 						}
 
 
+					} else if (strcmp(prikaz, "SUBOR") == 0) {
+						// dodat akcie, ak nam pride sprava SUBOR
+						// mal by som vytvorit connect
+						debug_sprava("Prisla mi sprava, ze niekto chce poslat subor...");
+
+						char meno[MINI_BUFFER];
+						char nazov_suboru[VELKOST_BUFFRA];
+						size_t velkost_suboru;
+						sscanf(parametre, "%[^'#']#%[^'#']#%ld", nazov_suboru, meno, &velkost_suboru);
+
+						// todo> dodat tu moznost vyberu / problem s citanim
+						printf("Idete prijat subor %s od %s s velkostou %ld B.\n", nazov_suboru, meno, velkost_suboru);
+
+						// vyhladanie IP adresy v zozname connect
+						// todo> rozhodit do funkcie
+						DOUBLYLINKEDLIST_ITEM *aktualny = list_connect->first;
+						while (aktualny != NULL) {
+							if (strcmp(meno, aktualny->data.meno) == 0) {
+								break;
+							}
+
+							aktualny = aktualny->next;
+						}
+
+						// todo> prerobit na thready
+						struct sockaddr ip_adresa;
+						memcpy(&ip_adresa, &(aktualny->data.ip_adresa), sizeof(ip_adresa));
+						((struct sockaddr_in *)&ip_adresa)->sin_port = htons(9001);
+
+						priprav_socket_prijimanie_subor(ip_adresa, sizeof(ip_adresa), nazov_suboru);
+
+					} else if (strcmp(prikaz, "SUBOR_ACK") == 0) {
+						// dodat akcie, ak nam pride sprava SUBOR_ACK
+						// mal by som zacat posielat subor
+
 					} else {
 						printf("Prisla nerozlustitelna sprava!\n");
+						printf("%s\n", buffer);
 					}
 				} else {
 					printf("Sprava od %s\n", buffer);

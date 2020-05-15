@@ -105,13 +105,12 @@ void *posli_info_existujem(void *data) {
 	while (*indikator_pokracuj) {
 		while (aktualna_polozka != NULL) {
 			if (aktualna_polozka->ifa_broadaddr != NULL && aktualna_polozka->ifa_broadaddr->sa_family == AF_INET) {
-
-				///for
 				debug_sprava("Posielam spravu, ze existujem.");
 				memcpy(&ciel_spravy.sin_addr, &(((struct sockaddr_in *)(aktualna_polozka->ifa_broadaddr))->sin_addr), sizeof(struct in_addr));
 
+				//ciel_spravy.sin_port = htons(&ciel_spravy.sin_port);
 				int pocet_odoslanych = sendto(socket_id, buffer, strlen(buffer), 0, (struct sockaddr *)&ciel_spravy, sizeof(ciel_spravy));
-				osetri_chybu("Nepodarilo sa odohtons(&ciel_spravy.sin_port)slat spravu, ze existujem - UDP DISCOVERY.", pocet_odoslanych, -1, true, socket_id);
+				osetri_chybu("Nepodarilo sa odoslat spravu, ze existujem - UDP DISCOVERY.", pocet_odoslanych, -1, true, socket_id);
 			}
 
 			aktualna_polozka = aktualna_polozka->ifa_next;
