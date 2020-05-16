@@ -189,14 +189,14 @@ bool tryRemoveDLL(DOUBLYLINKEDLIST *list, int pos, ACCEPT_INFO *data) {
         DOUBLYLINKEDLIST_ITEM *predosla_polozka = aktualna_polozka->previous;
         
         if (pos == list->size - 1){
-            *data = list->last->data;
+        	memcpy(data, &(list->last->data), sizeof(ACCEPT_INFO));
             list->last = predosla_polozka;
             predosla_polozka->next = NULL;
             // previous tu nikde nenastavujem            
             
             free(aktualna_polozka);
         } else {
-            *data = aktualna_polozka->data;
+        	memcpy(data, &(list->last->data), sizeof(ACCEPT_INFO));
             // mažem niekde v strede
             predosla_polozka->next = aktualna_polozka->next;
             aktualna_polozka->previous = predosla_polozka;

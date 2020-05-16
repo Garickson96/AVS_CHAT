@@ -2,6 +2,7 @@
 #define STRUCTS_THREADS_H_
 
 #include <stdbool.h>
+#include <SFML/Audio.h>
 
 #include "../headers/doubly_linked_list.h"
 
@@ -21,6 +22,7 @@ struct data_discovery_zistovanie {
 
 	bool *indikator_pokracuj;
 	char *meno;
+	struct ifaddrs *prva_polozka_zoznamu;
 };
 
 struct data_accept {
@@ -34,10 +36,16 @@ struct data_accept {
 struct data_read_write {
 	int epoll_descriptor;
 	int socket_id;
-	bool *indikator_pokracuj;
-
 	int maximum_stavov;
+
+	bool *indikator_pokracuj;
+	bool *indikator_subory;
+
 	DOUBLYLINKEDLIST *list_connect;
+	DOUBLYLINKEDLIST *list_accept;
+
+	sfSoundBuffer *hudba_buffer_sprava;
+	sfSoundBuffer *hudba_buffer_odhlasenie;
 
 	char *moje_meno;
 	int *moj_stav;

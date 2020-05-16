@@ -18,9 +18,9 @@ int chat_jeden_citaj(int socket_odkoho, char *buffer, int velkost_buffra);
 
 void chat_akcia_zapis(int socket_kam, char *typ_akcie, char *parametre);
 
-int spracuj_chat(bool *indikator_pokracuj, int *moj_stav, char *moje_meno, DOUBLYLINKEDLIST *list_connect, int maximum_stavov, int cislo_portu_server,
-		pthread_t *thread_accept, pthread_t *thread_spracovanie,
-		struct data_accept *data_pre_accept, struct data_read_write *data_pre_spracovanie);
+int spracuj_chat(bool *indikator_pokracuj, bool *indikator_subory, int *moj_stav, char *moje_meno, DOUBLYLINKEDLIST *list_connect,
+		DOUBLYLINKEDLIST *list_accept, int maximum_stavov, int cislo_portu_server, pthread_t *thread_accept, pthread_t *thread_spracovanie,
+		struct data_accept *data_pre_accept, struct data_read_write *data_pre_spracovanie, sfSoundBuffer *hudba_buffer_sprava, sfSoundBuffer *hudba_buffer_odhlasenie);
 
 void pripoj_sa(struct sockaddr *adresa, socklen_t dlzka_adresy, DOUBLYLINKEDLIST *list_connect, char *meno);
 

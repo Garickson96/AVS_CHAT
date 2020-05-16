@@ -11,16 +11,34 @@
 #define ODDELOVAC_AKCIA '~'
 #define ODDELOVAC_PARAMETER '#'
 
-void osetri_chybu(char *popis_chyby, int hodnota_porovnaj, int chybova_hodnota, bool zavri_spojenie, int socket_descr);
-void osetri_chybu_nekriticka(char *popis_chyby, int hodnota_porovnaj, int chybova_hodnota);
-void osetri_chybu_malloc(char *popis_chyby, void *smernik_malloc);
+// https://gist.github.com/RabaDabaDoba/145049536f815903c79944599c6f952a
 
-bool osetri_chybu_suboru(char *popis_chyby, FILE *smernik_subor);
+#define CHYBA_TUCNA_CERVENA "\e[1;31m"
+#define CHYBA_NEKRITICKA_FIALOVA "\e[0;35m"
+#define OZNAM_TUCNY_ZELENY "\e[1;32m"
+#define OZNAM_TUCNY_MODRY "\e[1;94m"
+#define DEBUG_ORANZOVA "\e[38;5;220m"
 
-void *vytvor_nastav_malloc(int velkost, char *sprava);
+#define TUCNE "\e[1m"
+#define KONIEC_FORMATOVANIA "\e[0m"
+
+void osetri_chybu(const char *popis_chyby, int hodnota_porovnaj, int chybova_hodnota, bool zavri_spojenie, int socket_descr);
+void osetri_chybu_nekriticka(const char *popis_chyby, int hodnota_porovnaj, int chybova_hodnota);
+void osetri_chybu_malloc(const char *popis_chyby, void *smernik_malloc);
+
+bool osetri_chybu_suboru(const char *popis_chyby, void *smernik_subor);
+
+void *vytvor_nastav_malloc(int velkost, const char *sprava);
 void dealokuj_malloc(void **malloc_priestor);
 
-void debug_sprava(char *sprava);
-void debug_ip_sprava(struct sockaddr_in *ip, char *sprava);
+void vypis_nadpis(const char *text);
+void vypis_uspech(const char *text);
+void vypis_chybu(const char *text);
+void vypis_informaciu(const char *text);
+void vypis_popisok(const char *text);
+
+void debug_sprava(const char *sprava);
+void debug_ip_sprava(struct sockaddr_in *ip, const char *sprava);
+void debug_sprava_rozsirena(const char *sprava);
 
 #endif /* HEADERS_UNIVERSAL_H_ */

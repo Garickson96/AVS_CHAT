@@ -16,6 +16,6 @@ void uzatvor_socket_discovery(int socket_id);
 int spracuj_discovery(bool *indikator_pokracuj, int port_tcp_server, int port_discovery,
 		pthread_t *thread_discovery, pthread_t *thread_discovery_posli,
 		struct data_discovery *data_pre_spracovanie, struct data_discovery_zistovanie *data_discovery_posli,
-		int socket_id_tcp, char *meno, DOUBLYLINKEDLIST *list_connect);
+		int socket_id_tcp, char *meno, DOUBLYLINKEDLIST *list_connect, struct ifaddrs *prva_polozka_zoznamu);
 
 #endif /* DISCOVERY_SERVER_H_ */

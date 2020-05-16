@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include <ifaddrs.h>
 #include <pthread.h>
 
 #include "../headers/chat_tcp.h"
@@ -11,29 +12,28 @@
 #include "../headers/universal.h"
 #include "../headers/files_processor.h"
 #include "../headers/cli.h"
+#include "../headers/hudba_chat.h"
 
 #define MENO_BUFFER 30
 #define POLOZKY_THREAD 4
 
 #define POCET_STATUSOV 5
 
+// globalna premenna
+int debug_avs_chat = 1;
+
 /**
  *
  */
-// poradie argumentov <TCP server> <DISCOVERY SERVER>
-// predvolene 10100 10001
+// poradie argumentov <TCP server> <DISCOVERY SERVER> <debug level 0 az 2 - dobrovolny>
+// predvolene 10100 10001 0
 int main(int argc, char **argv) {
-	bool indikator_pokracuj = true;
-
-	pthread_t thread_accept, thread_spracovanie, thread_discovery, thread_discovery_posli;
-	pthread_t *pole_thread[POLOZKY_THREAD] = { &thread_accept, &thread_spracovanie, &thread_discovery, &thread_discovery_posli };
-
-	char *pomenovania_statusov[] = { "dostupny", "zaneprazdneny", "nerusit", "nedostupny", "oficialne neznamy" };
-	int aktualny_stav = 0;
-
-	if (argc != 3) {
-		printf("Vyzaduju sa cisla portov ako argumenty programu.\n");
-		printf("Takto: <TCP server> <DISCOVERY SERVER>\n");
+	/**
+	 *
+	 */
+	if (argc != 3 && argc != 4) {
+		vypis_chybu("Vyzaduju sa cisla portov ako argumenty programu.");
+		vypis_chybu("Takto: <TCP server> <DISCOVERY SERVER> <DEBUG LEVEL>");
 		return EXIT_FAILURE;
 	}
 
@@ -43,19 +43,47 @@ int main(int argc, char **argv) {
 	for (int i = 1; i < argc; i++) {
 		cisla_portov[i - 1] = atoi(argv[i]);
 		if (cisla_portov[i - 1] < 1 || cisla_portov[i - 1] > 65535) {
-			printf("Skontrolujte si parametre programu - chyba v cisle %d (od 1 po 65535).\n", i - 1);
+			vypis_chybu("Skontrolujte si parametre programu - od 1 po 65535.");
 			return EXIT_FAILURE;
 		}
 	}
 
-	printf("P2P chat - semestralna praca\n\n");
+	if (argc == 4) {
+		int debug_test = atoi(argv[3]);
+		if (debug_test >= 0 && debug_test <= 2) {
+			debug_avs_chat = debug_test;
+		}
+	}
+
+	/**
+	 *
+	 */
+	bool indikator_pokracuj = true;
+	bool indikator_subory = true;
+
+	pthread_t thread_accept, thread_spracovanie, thread_discovery, thread_discovery_posli;
+	pthread_t *pole_thread[POLOZKY_THREAD] = { &thread_accept, &thread_spracovanie, &thread_discovery, &thread_discovery_posli };
+
+	char *pomenovania_statusov[] = { "dostupny", "zaneprazdneny", "nerusit", "nedostupny", "oficialne neznamy" };
+	int aktualny_stav = 0;
+
+	struct ifaddrs *prva_polozka_zoznamu;
+    int stav_adresy = getifaddrs(&prva_polozka_zoznamu);
+    osetri_chybu("Nepodarilo sa zistit broadcastove adresy portov.", stav_adresy, -1, false, 0);
+
+    sfSoundBuffer *hudba_buffer_sprava = NULL;
+    sfSoundBuffer *hudba_buffer_odhlasenie = NULL;
+    priprav_hudbu(&hudba_buffer_sprava, &hudba_buffer_odhlasenie);
+
+    /**
+     *
+     */
+	vypis_nadpis("P2P chat - semestralna praca");
 
 	char meno[MENO_BUFFER];
 	memset(meno, 0, sizeof(meno));
-	printf("Zadajte meno (jedinecny identifikator): ");
+	vypis_popisok("Zadajte meno (jedinecny identifikator): ");
 	scanf("%s", meno);
-
-
 
 	/**
 	 *
@@ -84,49 +112,84 @@ int main(int argc, char **argv) {
 	 *
 	 */
 
-	int chat_socket = spracuj_chat(&indikator_pokracuj, &aktualny_stav, meno, &list_connect, POCET_STATUSOV, cisla_portov[0], &thread_accept, &thread_spracovanie,
-			data_accept, data_read_write);
+	int chat_socket = spracuj_chat(&indikator_pokracuj, &indikator_subory, &aktualny_stav, meno, &list_connect, &list_accept, POCET_STATUSOV, cisla_portov[0],
+			&thread_accept, &thread_spracovanie, data_accept, data_read_write, hudba_buffer_sprava, hudba_buffer_odhlasenie);
 
 	int discovery_socket = spracuj_discovery(&indikator_pokracuj, cisla_portov[0], cisla_portov[1],
-			&thread_discovery, &thread_discovery_posli, data_discovery, data_discovery_zistovanie, chat_socket, meno, &list_connect);
+			&thread_discovery, &thread_discovery_posli, data_discovery, data_discovery_zistovanie, chat_socket, meno, &list_connect, prva_polozka_zoznamu);
 
 	/**
 	 *
 	 */
+	zoznam_menu();
 	while (indikator_pokracuj) {
 		char volba = vyber_volby();
 
 		switch (volba) {
 			case 'a':
+			{
 				zobraz_list_accept(&list_accept);
 				break;
+			}
 			case 'b':
+			{
 				zobraz_list_connect(&list_connect, meno, pomenovania_statusov, POCET_STATUSOV);
 				break;
+			}
 			case 'c':
+			{
 				posli_spravu(&list_connect, meno, pomenovania_statusov, POCET_STATUSOV);
 				break;
+			}
 			case 'd':
-				ukoncenie_programu(&indikator_pokracuj, chat_socket, discovery_socket, pole_thread, POLOZKY_THREAD);
-				break;
-			case 'e':
+			{
 				zobraz_moj_status(pomenovania_statusov, POCET_STATUSOV, &aktualny_stav);
 				break;
-			case 'f':
+			}
+			case 'e':
+			{
 				zmen_moj_status(pomenovania_statusov, POCET_STATUSOV, &aktualny_stav, &list_connect, meno);
 				break;
-			case 'g':
+			}
+			case 'f':
+			{
 				aktualizuj_statusy(&list_connect, meno);
 				break;
-			case 'h':
-				zobraz_subory_adresar("/root");
+			}
+			case 'g':
+			{
+				zobraz_subory_adresar_cli();
 				break;
-			case 'i':
+			}
+			case 'h':
+			{
 				odoslat_subor_cli(&list_connect, meno, pomenovania_statusov, POCET_STATUSOV, data_odoslanie_suboru);
 				break;
-			default:
-				nespravna_hodnota();
+			}
+			case 'i':
+			{
+				invertuj_indikator_subory(&indikator_subory);
 				break;
+			}
+			case 'x':
+			{
+				ukoncenie_programu(&indikator_pokracuj, chat_socket, discovery_socket, pole_thread, POLOZKY_THREAD);
+				break;
+			}
+			case 'z':
+			{
+				uprav_hodnotu_debug();
+				break;
+			}
+			case '?':
+			{
+				zoznam_menu();
+				break;
+			}
+			default:
+			{
+				nespravna_hodnota();
+			}
 		}
 	}
 
@@ -140,12 +203,16 @@ int main(int argc, char **argv) {
 	disposeDLL(&list_connect);
 	disposeDLL(data_accept->list_accept);
 
+	vycisti_buffre_hudba(&hudba_buffer_sprava, &hudba_buffer_odhlasenie);
+
+	freeifaddrs(prva_polozka_zoznamu);
+
 	dealokuj_malloc((void **)&data_odoslanie_suboru);
 	dealokuj_malloc((void **)&data_read_write);
 	dealokuj_malloc((void **)&data_accept);
 	dealokuj_malloc((void **)&data_discovery_zistovanie);
 	dealokuj_malloc((void **)&data_discovery);
 
-	printf("KONIEC\n");
+	vypis_nadpis("KONIEC");
 	return EXIT_SUCCESS;
 }
