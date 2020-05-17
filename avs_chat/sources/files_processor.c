@@ -24,7 +24,7 @@
 #define MAX_LISTEN_SUBOR 1
 
 /**
- * Vrati absolutnu cestu pre obrazok. Predpoklada sa, ze obrazok je ulozeny v ceste programu - preto je tam prikaz getcwd, ktorý vráti aktuálnu pozíciu (vracia bez /).
+ * Vrati absolutnu cestu pre subor. Predpoklada sa, ze subor je ulozeny v ceste programu - preto je tam prikaz getcwd, ktorý vráti aktuálnu pozíciu (vracia bez /).
  * Ak bola zadana absolutna cesta (zacina sa na /), tak sa vykona jednoducha kopia. Dlzka znamena velkost cieloveho buffra, kvoli preteceniu.
  */
 void vrat_absolutnu_cestu(const char *nazov_suboru, char *plna_cesta_subor, int dlzka) {
