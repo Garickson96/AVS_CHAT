@@ -1,2 +1,5 @@
-# AVS_CHAT
-Semestralka k predmetu algoritmy v sieťach, peer to peer chet so zdielaním súborov
+# AVS CHAT
+
+Semestralka k predmetu Algoritmy v sieťach, peer to peer chat nad TCP, spolu s presence a zdieľaním súborov.
+
+Pre viac informácií kontaktujte tvorcu.
