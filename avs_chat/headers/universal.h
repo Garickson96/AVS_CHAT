@@ -28,7 +28,7 @@ void osetri_chybu_malloc(const char *popis_chyby, void *smernik_malloc);
 
 bool osetri_chybu_suboru(const char *popis_chyby, void *smernik_subor);
 
-void *vytvor_nastav_malloc(int velkost, const char *sprava);
+void *vytvor_nastav_malloc(unsigned int velkost, const char *sprava);
 void dealokuj_malloc(void **malloc_priestor);
 
 void vypis_nadpis(const char *text);

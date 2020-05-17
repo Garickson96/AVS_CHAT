@@ -23,13 +23,17 @@
 int debug_avs_chat = 1;
 
 /**
- *
+ * Hlavny program. Skontroluje sa spravnost zadanych argumentov v tvare <cislo portu TCP servera> <cislo portu UDP discovery> <debug level, nepovinny parameter>.
+ * Nasledne sa pripravia data platne pre cely beh programu. V dalsej casti sa poziada od pouzivatela jeho meno, ktore je jedinecnym identifikatorom na chate.
+ * Pripravia sa data pre jednotlive vlakna a spustia sa v spracuj_chat a v spracuj_discovery v samostatnych vlaknach.
+ * Dalej sa pouzivatelovi zobrazi textove menu, ktore sa pouziva na ovladanie programu. Na konci tejto funkcie su uvedene prikazy potrebne pre vycistenie obsadenej
+ * pamate v halde.
  */
 // poradie argumentov <TCP server> <DISCOVERY SERVER> <debug level 0 az 2 - dobrovolny>
-// predvolene 10100 10001 0
+// napriklad 10100 10001 1
 int main(int argc, char **argv) {
 	/**
-	 *
+	 * Pocet dodatocnych argumentov je 2 alebo 3 (ak chce nastavit explicitne debug level). Implicitny argument 0 je nazov programu.
 	 */
 	if (argc != 3 && argc != 4) {
 		vypis_chybu("Vyzaduju sa cisla portov ako argumenty programu.");
@@ -56,9 +60,11 @@ int main(int argc, char **argv) {
 	}
 
 	/**
-	 *
+	 * Priprava dat potrebnych pre beh programu.
 	 */
+	// program nebol ukonceny
 	bool indikator_pokracuj = true;
+	// prijimam subory
 	bool indikator_subory = true;
 
 	pthread_t thread_accept, thread_spracovanie, thread_discovery, thread_discovery_posli;
@@ -71,12 +77,13 @@ int main(int argc, char **argv) {
     int stav_adresy = getifaddrs(&prva_polozka_zoznamu);
     osetri_chybu("Nepodarilo sa zistit broadcastove adresy portov.", stav_adresy, -1, false, 0);
 
+    // priprava hudby
     sfSoundBuffer *hudba_buffer_sprava = NULL;
     sfSoundBuffer *hudba_buffer_odhlasenie = NULL;
     priprav_hudbu(&hudba_buffer_sprava, &hudba_buffer_odhlasenie);
 
     /**
-     *
+     * Pouzivatelovi sa zobrazi nazov programu a poziada sa od neho meno. Meno ma byt bez medzery.
      */
 	vypis_nadpis("P2P chat - semestralna praca");
 
@@ -86,7 +93,7 @@ int main(int argc, char **argv) {
 	scanf("%s", meno);
 
 	/**
-	 *
+	 * Priprava dat pre vlakna a priprava linkedlistov na ukladanie dat. Data su ukladane v halde.
 	 */
 	struct data_discovery *data_discovery = (struct data_discovery *)vytvor_nastav_malloc(sizeof(struct data_discovery), "Nepodarilo sa alokovat priestor pre data_discovery.");
 	struct data_discovery_zistovanie *data_discovery_zistovanie = (struct data_discovery_zistovanie *)vytvor_nastav_malloc(sizeof(struct data_discovery_zistovanie), "Nepodarilo sa alokovat priestor pre data_discovery_zistovanie.");
@@ -102,16 +109,15 @@ int main(int argc, char **argv) {
 
 	struct data_odoslanie_suboru *data_odoslanie_suboru = (struct data_odoslanie_suboru *)vytvor_nastav_malloc(sizeof(struct data_odoslanie_suboru), "Nepodarilo sa alokovat priestor pre data_odoslanie_suboru.");
 
-	// pridanie sameho seba
+	// pridanie sameho seba do zoznamu list_connect
 	struct accept_info info_ja;
 	memset(&info_ja, 0, sizeof(info_ja));
 	strncpy(info_ja.meno, meno, sizeof(info_ja.meno));
 	addDLL(&list_connect, info_ja);
 
 	/**
-	 *
+	 * Spustenie socketov a prace s chatom a s discovery cez UDP.
 	 */
-
 	int chat_socket = spracuj_chat(&indikator_pokracuj, &indikator_subory, &aktualny_stav, meno, &list_connect, &list_accept, POCET_STATUSOV, cisla_portov[0],
 			&thread_accept, &thread_spracovanie, data_accept, data_read_write, hudba_buffer_sprava, hudba_buffer_odhlasenie);
 
@@ -119,12 +125,11 @@ int main(int argc, char **argv) {
 			&thread_discovery, &thread_discovery_posli, data_discovery, data_discovery_zistovanie, chat_socket, meno, &list_connect, prva_polozka_zoznamu);
 
 	/**
-	 *
+	 * Menu a ovladanie programu.
 	 */
 	zoznam_menu();
 	while (indikator_pokracuj) {
 		char volba = vyber_volby();
-
 		switch (volba) {
 			case 'a':
 			{
@@ -194,7 +199,7 @@ int main(int argc, char **argv) {
 	}
 
 	/**
-	 *
+	 * Cakanie na ukoncenie vlakna a vycistenie dat pridelenych vlaknam.
 	 */
 	for (int i = 0; i < POLOZKY_THREAD; i++) {
 		pthread_join(*(pole_thread[i]), NULL);

@@ -26,7 +26,7 @@
 extern int debug_avs_chat;
 
 /**
- *
+ * Vypise kratky popisok pre zadanie volby v menu.
  */
 char vyber_volby(void) {
 	char volba = '\0';
@@ -36,7 +36,8 @@ char vyber_volby(void) {
 }
 
 /**
- *
+ * Vypise hodnoty pre debug a povoli pouzivatelovi zadat novu hodnotu pre debug. Debug je rieseny cez globalnu premennu.
+ * Povolene hodnoty 0, 1, 2.
  */
 void uprav_hodnotu_debug(void) {
 	printf("Povolene hodnoty pre debug: \n");
@@ -57,7 +58,7 @@ void uprav_hodnotu_debug(void) {
 }
 
 /**
- *
+ * Vypise menu na obrazovku.
  */
 void zoznam_menu(void) {
 	printf("\n");
@@ -79,7 +80,7 @@ void zoznam_menu(void) {
 }
 
 /**
- *
+ * Spracuje IP adresu do buffera ju vlozi ako retazec spolu s cislom portu. Podporovane len IPv4 adresy.
  */
 char *daj_ip_string(const struct sockaddr *adresa, char *buffer) {
 	sprintf(buffer, "%s:%d", inet_ntoa(((struct sockaddr_in *)adresa)->sin_addr), ntohs(((struct sockaddr_in *)adresa)->sin_port));
@@ -87,9 +88,9 @@ char *daj_ip_string(const struct sockaddr *adresa, char *buffer) {
 }
 
 /**
- *
+ * Zobrazi informacie o pouzivateloch v list_connect. Pouziva sa na komunikaciu v smere VON. Obsahuje informacie ako SOCKET_ID, meno pouzivatela, status, IP adresu a poslednu aktualizaciu.
  */
-void zobraz_list_connect(DOUBLYLINKEDLIST *list, char *moje_meno, char **pomenovania_statusov, int n) {
+void zobraz_list_connect(DOUBLYLINKEDLIST *list, const char *moje_meno, char **pomenovania_statusov, int n) {
 	DOUBLYLINKEDLIST_ITEM *aktualny = list->first;
 	printf("%s%-6s%-20s%-15s%-25s%-15s%-20s%s\n", TUCNE, "CISLO", "MENO", "SOCKET ID", "IP ADRESA", "STATUS", "CAS AKTUALIZACIE", KONIEC_FORMATOVANIA);
 	int i = 0;
@@ -112,7 +113,7 @@ void zobraz_list_connect(DOUBLYLINKEDLIST *list, char *moje_meno, char **pomenov
 }
 
 /**
- *
+ * Zobrazi informacie o pouzivateloch v list_accept. Pouziva sa na komunikaciu v smere DNU. Obsahuje informacie iba IP adresu a port a cislo socketu (iny od list_connect).
  */
 void zobraz_list_accept(DOUBLYLINKEDLIST *list) {
 	DOUBLYLINKEDLIST_ITEM *aktualny = list->first;
@@ -128,12 +129,15 @@ void zobraz_list_accept(DOUBLYLINKEDLIST *list) {
 }
 
 /**
- *
+ * CLI rozhranie na posielanie sprav. Informuje sa pouzivatel o obmedzeniach programu, ktore maju v pripade ich porusenia za nasledok ukoncenie odosielania sprav.
+ * Vyberie si cislo v prvom stlpci, komu chce posielat spravy. Spravy sa danemu adresatovi posielaju, dokym nie je presne zadane :KONIEC. Potom sa pouzivatel vrati
+ * do menu.
  */
-void posli_spravu(DOUBLYLINKEDLIST *list, char *moje_meno, char **pomenovania_statusov, int n) {
+void posli_spravu(DOUBLYLINKEDLIST *list, const char *moje_meno, char **pomenovania_statusov, int n) {
 	int cislo_adresata = -1;
 	char buffer[TEXT_VELKOST];
 
+	// vyber adresata
 	printf("Maximalna velkost spravy je obmedzena na 160 znakov.\nZakazane znaky: >\nPosielanie sprav ukoncte spravou :KONIEC.\n");
 	vypis_popisok("Zadajte komu chcete odoslat spravu: ");
 	printf("\n");
@@ -146,12 +150,15 @@ void posli_spravu(DOUBLYLINKEDLIST *list, char *moje_meno, char **pomenovania_st
 
 	// kontrola cisla adresata
 	DOUBLYLINKEDLIST_ITEM *aktualny = overit_existenciu_pouzivatela(list, cislo_adresata);
-	if (aktualny == NULL) {
+	// 0 som ja v list_connect a obsahuje to neplatne udaje
+	if (aktualny == NULL || cislo_adresata == 0) {
 		vypis_chybu("Pozadovany adresat neexistuje!\n");
 		return;
 	}
 
-	// fflush(stdin);
+	// kvoli problemom so scanf
+	getchar();
+	// citanie sprav a ich posielanie
 	do {
 		memset(buffer, 0, sizeof(buffer));
 		vypis_popisok("Zadajte spravu: ");
@@ -173,7 +180,7 @@ void posli_spravu(DOUBLYLINKEDLIST *list, char *moje_meno, char **pomenovania_st
 }
 
 /**
- *
+ * Vypise podla parametra mozne statusy v programe. Zoznam statusov je ulozeny ako premenna v main.
  */
 void vypis_dostupne_statusy(char **pomenovania_statusov, int n) {
 	printf("Vypis moznych statusov: \n");
@@ -183,7 +190,7 @@ void vypis_dostupne_statusy(char **pomenovania_statusov, int n) {
 }
 
 /**
- *
+ * Prelozi staus reprezentovany premennou aktualny_stav (ulozeny v main) do textovej podoby a vypise ho pouzivatelovi ako text.
  */
 void zobraz_moj_status(char **pomenovania_statusov, int n, int *aktualny_stav) {
 	if (*aktualny_stav >= 0 && *aktualny_stav < n) {
@@ -194,9 +201,10 @@ void zobraz_moj_status(char **pomenovania_statusov, int n, int *aktualny_stav) {
 }
 
 /**
- *
+ * Pouzivatel si zmeni svoj status a vsetkym v zozname list_connect posle spravu o tom, ze si zmenil status. Ti si nasledne tieto
+ * zmeny zaznamenaju v tabulke.
  */
-void zmen_moj_status(char **pomenovania_statusov, int n, int *aktualny_stav, DOUBLYLINKEDLIST *list, char *moje_meno) {
+void zmen_moj_status(char **pomenovania_statusov, int n, int *aktualny_stav, DOUBLYLINKEDLIST *list, const char *moje_meno) {
 	vypis_dostupne_statusy(pomenovania_statusov, n);
 
 	int test = -1;
@@ -226,9 +234,9 @@ void zmen_moj_status(char **pomenovania_statusov, int n, int *aktualny_stav, DOU
 }
 
 /**
- *
+ * Rozposle ziadosti o aktualizaciu stavov pre ostatnych pouzivatelov, okrem seba. Nasledne oni musia poslat informaciu o ich novom stave (mimo tejto metody).
  */
-void aktualizuj_statusy(DOUBLYLINKEDLIST *list, char *moje_meno) {
+void aktualizuj_statusy(DOUBLYLINKEDLIST *list, const char *moje_meno) {
 	DOUBLYLINKEDLIST_ITEM *aktualny = list->first;
 	while (aktualny != NULL) {
 		if (strcmp(moje_meno, aktualny->data.meno) != 0) {
@@ -243,10 +251,13 @@ void aktualizuj_statusy(DOUBLYLINKEDLIST *list, char *moje_meno) {
 }
 
 /**
- *
+ * Overi ci zadany pouzivatel je v zadanom zozname (podla indexu). Ak je nespravny index, vrati sa NULL.
  */
 DOUBLYLINKEDLIST_ITEM *overit_existenciu_pouzivatela(DOUBLYLINKEDLIST *list, int cislo_adresata) {
-	// kontrola cisla adresata
+	if (cislo_adresata < 0) {
+		return NULL;
+	}
+
 	DOUBLYLINKEDLIST_ITEM *aktualny = list->first;
 	int i = 0;
 	while (aktualny != NULL) {
@@ -262,12 +273,13 @@ DOUBLYLINKEDLIST_ITEM *overit_existenciu_pouzivatela(DOUBLYLINKEDLIST *list, int
 }
 
 /**
- *
+ * Zobrazi moznosti pre odoslanie suboru. Spyta sa, komu poslat subor, aky subor a vytvori vlakno na jeho poslanie.
  */
 void odoslat_subor_cli(DOUBLYLINKEDLIST *list, char *moje_meno, char **pomenovania_statusov, int n, struct data_odoslanie_suboru *data) {
 	vypis_popisok("Vyberte si adresata spravy: ");
 	printf("\n");
 
+	// adresat spravy
 	zobraz_list_connect(list, moje_meno, pomenovania_statusov, n);
 
 	printf("\n");
@@ -276,15 +288,22 @@ void odoslat_subor_cli(DOUBLYLINKEDLIST *list, char *moje_meno, char **pomenovan
 	scanf("%d", &cislo_adresata);
 
 	DOUBLYLINKEDLIST_ITEM *aktualny = overit_existenciu_pouzivatela(list, cislo_adresata);
-	if (aktualny == NULL) {
+	// 0 som ja v list_connect a obsahuje to neplatne udaje
+	if (aktualny == NULL || cislo_adresata == 0) {
 		vypis_chybu("Pozadovany adresat neexistuje!\n");
 		return;
 	}
 
+	// nazov suboru
 	char nazov_suboru[BUFFER_VELKOST];
 	vypis_popisok("Zadajte nazov suboru: ");
-	scanf("%s", nazov_suboru);
 
+	getchar();
+	fgets(nazov_suboru, BUFFER_VELKOST, stdin);
+	// odstranenie newline
+	*(nazov_suboru + strlen(nazov_suboru) - 1) = '\0';
+
+	// vytvorenie vlakna na odoslanie suboru
 	if (skontroluj_subor(nazov_suboru)) {
 		// pripravim svoju stranu
 		data->cislo_portu_odosielanie = CISLO_PORTU_ODOSIELANIE;
@@ -305,7 +324,7 @@ void odoslat_subor_cli(DOUBLYLINKEDLIST *list, char *moje_meno, char **pomenovan
 }
 
 /**
- *
+ * Invertuje indikator povolenia prijimania suborov a informuje pouzivatela o jeho novej hodnote. Hodnota je ulozena v main.
  */
 void invertuj_indikator_subory(bool *indikator_subory) {
 	*indikator_subory = !(*indikator_subory);
@@ -317,14 +336,14 @@ void invertuj_indikator_subory(bool *indikator_subory) {
 }
 
 /**
- *
+ * Zobrazi informaciu o nespravnej volbe pri menu.
  */
 void nespravna_hodnota(void) {
 	vypis_chybu("Zadali ste nespravnu hodnotu v menu. Pre pomoc stlacte ?.");
 }
 
 /**
- *
+ * Zobrazi subory a adresare na danej absolutnej ceste zadanej pouzivatelom.
  */
 void zobraz_subory_adresar_cli(void) {
 	char absolutna_cesta[BUFFER_CESTA];
@@ -339,7 +358,7 @@ void zobraz_subory_adresar_cli(void) {
 }
 
 /**
- *
+ * Pri ukonceni programu (moznost x) sa nasilne uzatvoria sockety. Cistenie sa vykona v main.
  */
 void ukoncenie_programu(bool *indikator_pokracuj, int chat_socket, int discovery_socket, pthread_t **pole_threadov, int pocet) {
 	*indikator_pokracuj = false;
@@ -350,4 +369,3 @@ void ukoncenie_programu(bool *indikator_pokracuj, int chat_socket, int discovery
 		pthread_cancel(*(pole_threadov[i]));
 	}
 }
-

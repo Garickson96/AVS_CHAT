@@ -13,7 +13,8 @@
 #define CAS_CAKANIA 5000000
 
 /**
- *
+ * Nacita zvukove subory prilozene k programu v adresari Debug. Vytvori im buffer v halde. V pripade chyby oznam.
+ * Spracovanie zvuku (jeho prehratie) je cez kniznicu SFML. Pouzivat ako private.
  */
 sfSoundBuffer *priprav_jednu_hudbu(const char *nazov_suboru) {
 	debug_sprava("Nahravam zvukovy subor pre program...");
@@ -24,7 +25,7 @@ sfSoundBuffer *priprav_jednu_hudbu(const char *nazov_suboru) {
 }
 
 /**
- *
+ * Pre beh programu sa pripravia 2 zvucky - pre prijatu spravu a pre notifikaciu odhlasenia ineho pouzivatela zo systemu.
  */
 void priprav_hudbu(sfSoundBuffer **hudba_buffer_sprava, sfSoundBuffer **hudba_buffer_odhlasenie) {
 	*hudba_buffer_sprava = priprav_jednu_hudbu(ZVUCKA_SPRAVA);
@@ -32,7 +33,7 @@ void priprav_hudbu(sfSoundBuffer **hudba_buffer_sprava, sfSoundBuffer **hudba_bu
 }
 
 /**
- *
+ * Vycisti buffre vytvorene pre hudbu. Pouzivaju sa funkcie dodane CSFML.
  */
 void vycisti_buffre_hudba(sfSoundBuffer **hudba_buffer_sprava, sfSoundBuffer **hudba_buffer_odhlasenie) {
 	sfSoundBuffer_destroy(*hudba_buffer_sprava);
@@ -43,7 +44,8 @@ void vycisti_buffre_hudba(sfSoundBuffer **hudba_buffer_sprava, sfSoundBuffer **h
 }
 
 /**
- *
+ * Prehratie zvuku prebieha v samostatnom vlakne - je to blokujuca operacia. Pozor, prehravanie trva urcity cas a buffer spolu so
+ * sound musia byt dostupne v okamihu prehravania - inak to nepojde. Preto je tu na konci dodane uspatie - okolo 5 sekund.
  */
 void *prehratie_zvuku(void *data) {
 	sfSoundBuffer *buffer = (sfSoundBuffer *)data;
@@ -61,7 +63,7 @@ void *prehratie_zvuku(void *data) {
 }
 
 /**
- *
+ * Vytvori vlakno k prehratiu zvuku spravy. Do vlakna sa posle buffer so zvukom vo formate WAV. Vlakna nie su joinovane.
  */
 void prehraj_zvuk_sprava(sfSoundBuffer *hudba_buffer_sprava) {
 	// zvuk nie je joinovany
@@ -72,7 +74,7 @@ void prehraj_zvuk_sprava(sfSoundBuffer *hudba_buffer_sprava) {
 }
 
 /**
- *
+ * Vytvori vlakno k prehratiu zvuku pre odhlasenie. Do vlakna sa posle buffer so zvukom vo formate WAV. Vlakna nie su joinovane.
  */
 void prehraj_zvuk_odhlasenie(sfSoundBuffer *hudba_buffer_odhlasenie) {
 	debug_sprava("Prehrava sa zvuk k odhlaseniu...");
